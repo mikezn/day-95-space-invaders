@@ -18,3 +18,9 @@ class Bullet(Turtle):
     def move(self):
         new_y = self.ycor() + MOVE_DIST
         self.goto(self.xcor(), new_y)
+
+
+    def destroy(self):
+        self.clear()
+        self.reset()
+        self.hideturtle()
