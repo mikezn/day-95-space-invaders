@@ -2,6 +2,7 @@ from turtle import Screen
 import time
 from gun import Gun
 from alien import Alien
+import random
 
 SCREEN_WIDTH = 855
 SCREEN_HEIGHT = 600
@@ -28,7 +29,7 @@ aliens = []
 
 # Block layout
 rows = 2
-cols = 2
+cols = 8
 alien_width = 2
 alien_height = 2
 spacing =  10
@@ -63,22 +64,60 @@ def main() -> None:
     horde_direction = 1
     next_dir = 1
     y_move = 0
+    alien_move_interval = 0.5
+    last_alien_move_time = time.time()
+
     while game_is_on:
         screen.update()
         player.update_position()
-        for bullet in bullets:
-            bullet.move()
 
-        if horde_direction != next_dir:
-            y_move = (-alien_height*20) - spacing
-        horde_direction = next_dir
-        # print(horde_direction, next_dir)
-        for alien in aliens:
-            alien.move(horde_direction, y_move)
-            if alien.wall_collide(WALL_LEFT, WALL_RIGHT) and horde_direction == next_dir:
-                next_dir*=-1
-                print(next_dir)
-        y_move = 0
+        # bullet move and collision detection
+        for bullet in bullets[:]:
+            bullet.move()
+            if bullet.owner == 'player':
+                for alien in aliens[:]:
+                    if bullet.detect_collision(alien, 20):
+                        bullet.destroy()
+                        bullets.remove(bullet)
+                        alien.destroy()
+                        aliens.remove(alien)
+                        break
+            elif bullet.owner == 'alien':
+                if bullet.detect_collision(player, 20):
+                    bullet.destroy()
+                    bullets.remove(bullet)
+                    player.hit()
+
+            # detect if bullet has left the screen so it can be removed
+            if bullet.off_screen(WALL_LEFT, WALL_RIGHT, WALL_TOP, WALL_BOTTOM):
+                bullet.destroy()
+                bullets.remove(bullet)
+
+
+
+
+        # alien horde movement & fire bullet
+        current_time = time.time()
+        if current_time - last_alien_move_time >= alien_move_interval:
+            last_alien_move_time = current_time
+            if horde_direction != next_dir:
+                y_move = (-alien_height*20) - spacing
+            horde_direction = next_dir
+            for alien in aliens:
+                # Randomly let aliens shoot
+                if random.random() < 0.05:  # 1% chance per frame (tweak this)
+                    bullets.append(alien.fire_bullet())
+                alien.move(horde_direction, y_move)
+                if alien.wall_collide(WALL_LEFT, WALL_RIGHT) and horde_direction == next_dir:
+                    next_dir*=-1
+            y_move = 0
+
+
+
+
+
+
+
         time.sleep(0.01)
 
 

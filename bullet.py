@@ -3,7 +3,7 @@ from turtle import Turtle
 MOVE_DIST = 3
 
 class Bullet(Turtle):
-    def __init__(self, owner, pos, bullet_width, bullet_height):
+    def __init__(self, owner, pos, direction, bullet_width, bullet_height):
         super().__init__()
         self.bullet_width = bullet_width
         self.bullet_height = bullet_height
@@ -13,10 +13,11 @@ class Bullet(Turtle):
         self.penup()
         self.goto(pos)
         self.owner = owner
+        self.direction = direction
 
 
     def move(self):
-        new_y = self.ycor() + MOVE_DIST
+        new_y = self.ycor() + (MOVE_DIST*self.direction)
         self.goto(self.xcor(), new_y)
 
 
@@ -24,3 +25,12 @@ class Bullet(Turtle):
         self.clear()
         self.reset()
         self.hideturtle()
+
+
+    def detect_collision(self, target, threshold) -> bool:
+        return self.distance(target) < threshold
+
+
+    def off_screen(self, left, right, top, bottom) -> bool:
+        if self.ycor() > top or self.ycor() < bottom:
+            return True
