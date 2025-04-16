@@ -26,7 +26,7 @@ screen.tracer(0)
 player = Gun((0, WALL_BOTTOM+15), gun_width=2, gun_height=1)
 
 # Set up scoreboard
-scoreboard = Scoreboard(player)
+scoreboard = Scoreboard(player, WALL_LEFT, WALL_RIGHT)
 
 # Create aliens
 aliens = []
@@ -69,6 +69,8 @@ def main() -> None:
     y_move = 0
     alien_move_interval = 0.5
     last_alien_move_time = time.time()
+    life_reset_duration = 1.0
+    life_lost_time = 0
 
     while game_is_on:
         screen.update()
@@ -90,11 +92,14 @@ def main() -> None:
                 if bullet.detect_collision(player, 20):
                     bullet.destroy()
                     bullets.remove(bullet)
+                    player.hideturtle()
+                    life_lost_time = time.time()
                     if player.hit():
                         print("GAME OVER – The aliens have landed!")
                         game_is_on = False
                         break
-
+            if time.time() - life_lost_time >= life_reset_duration:
+                    player.showturtle()
             # detect if bullet has left the screen so it can be removed
             if bullet.off_screen(WALL_LEFT, WALL_RIGHT, WALL_TOP, WALL_BOTTOM):
                 bullet.destroy()
@@ -122,11 +127,6 @@ def main() -> None:
 
             scoreboard.update_score_display(player)
             y_move = 0
-
-
-
-
-
 
 
         time.sleep(0.01)

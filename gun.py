@@ -1,5 +1,6 @@
 from turtle import Turtle
 from bullet import Bullet
+import time
 
 class Gun(Turtle):
     def __init__(self, xy, gun_width, gun_height):
@@ -10,11 +11,12 @@ class Gun(Turtle):
         self.color("white")
         self.turtlesize(stretch_wid=self.gun_height, stretch_len=self.gun_width)
         self.penup()
-        self.goto(xy)
+        self.start_pos = xy
         self.moving_left = False
         self.moving_right = False
         self.lives = 3
         self.score = 0
+        self.goto(self.start_pos)
 
 
     def move_left(self) -> None:
@@ -48,6 +50,8 @@ class Gun(Turtle):
         self.lives-=1
         if self.lives == 0:
             return True
+        else:
+            self.goto(self.start_pos)
 
 
     def update_score(self, score):

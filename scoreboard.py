@@ -1,16 +1,18 @@
 from turtle import Turtle
 
 ALIGNMENT = "center"
-FONT = ('Courier', 80, 'normal')
+FONT = ('Courier', 60, 'normal')
 
 class Scoreboard(Turtle):
-    def __init__(self, player):
+    def __init__(self, player, wall_left, wall_right):
         super().__init__()
         self.color("white")
         self.penup()
         self.hideturtle()
         self.player_lives = player.lives
         self.player_score = player.score
+        self.left_align = wall_left + 100
+        self.right_align = wall_right - 100
         self.update_score_display(player)
 
 
@@ -18,7 +20,7 @@ class Scoreboard(Turtle):
         self.player_score = player.score
         self.player_lives = player.lives
         self.clear()
-        self.goto(-100, 200)
+        self.goto(self.left_align, 200)
         self.write(f'{self.player_lives}', align=ALIGNMENT, font=FONT)
-        self.goto(100, 200)
+        self.goto(self.right_align, 200)
         self.write(f'{self.player_score}', align=ALIGNMENT, font=FONT)
