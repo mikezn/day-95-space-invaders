@@ -3,6 +3,7 @@ import time
 from gun import Gun
 from alien import Alien
 import random
+from scoreboard import Scoreboard
 
 SCREEN_WIDTH = 855
 SCREEN_HEIGHT = 600
@@ -24,6 +25,9 @@ screen.tracer(0)
 # Create new player
 player = Gun((0, WALL_BOTTOM+15), gun_width=2, gun_height=1)
 
+# Set up scoreboard
+scoreboard = Scoreboard(player)
+
 # Create aliens
 aliens = []
 
@@ -44,7 +48,7 @@ for row in range(rows):
     for col in range(cols):
         x = start_x + col * (alien_width*20 + spacing)
         y = start_y - row * (alien_height*20 + spacing)
-        alien = Alien((x, y), alien_width, alien_height)
+        alien = Alien((x, y), alien_width, alien_height, score_value=100)
         aliens.append(alien)
 
 # player paddle to move on arrow key press
@@ -57,10 +61,9 @@ screen.onkeyrelease(player.stop_right, "Right")
 screen.onkey(lambda: bullets.append(player.fire_bullet()), "space")
 
 
-game_is_on = True
-
-
 def main() -> None:
+
+    game_is_on = True
     horde_direction = 1
     next_dir = 1
     y_move = 0
@@ -77,6 +80,7 @@ def main() -> None:
             if bullet.owner == 'player':
                 for alien in aliens[:]:
                     if bullet.detect_collision(alien, 20):
+                        player.update_score(alien.score_value)
                         bullet.destroy()
                         bullets.remove(bullet)
                         alien.destroy()
@@ -86,17 +90,17 @@ def main() -> None:
                 if bullet.detect_collision(player, 20):
                     bullet.destroy()
                     bullets.remove(bullet)
-                    player.hit()
+                    if player.hit():
+                        print("GAME OVER – The aliens have landed!")
+                        game_is_on = False
+                        break
 
             # detect if bullet has left the screen so it can be removed
             if bullet.off_screen(WALL_LEFT, WALL_RIGHT, WALL_TOP, WALL_BOTTOM):
                 bullet.destroy()
                 bullets.remove(bullet)
 
-
-
-
-        # alien horde movement & fire bullet
+        # alien horde movement / fire bullet / check collision with player or bottom wall
         current_time = time.time()
         if current_time - last_alien_move_time >= alien_move_interval:
             last_alien_move_time = current_time
@@ -110,6 +114,13 @@ def main() -> None:
                 alien.move(horde_direction, y_move)
                 if alien.wall_collide(WALL_LEFT, WALL_RIGHT) and horde_direction == next_dir:
                     next_dir*=-1
+                #check if alien has invaded player space at bottom (game over)
+                if alien.hit_player_space(player):
+                    print("GAME OVER – The aliens have landed!")
+                    game_is_on = False
+                    break
+
+            scoreboard.update_score_display(player)
             y_move = 0
 
 

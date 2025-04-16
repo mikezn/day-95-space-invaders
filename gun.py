@@ -14,6 +14,7 @@ class Gun(Turtle):
         self.moving_left = False
         self.moving_right = False
         self.lives = 3
+        self.score = 0
 
 
     def move_left(self) -> None:
@@ -43,7 +44,11 @@ class Gun(Turtle):
         return Bullet(owner='player', direction=1, pos=(self.xcor(), self.ycor()), bullet_width=.5, bullet_height=1)
 
 
-
     def hit(self) -> bool:
         self.lives-=1
-        print("oh no im hit -1 life")
+        if self.lives == 0:
+            return True
+
+
+    def update_score(self, score):
+        self.score+=score

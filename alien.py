@@ -4,7 +4,7 @@ from bullet import Bullet
 MOVE_DIST = 10
 
 class Alien(Turtle):
-    def __init__(self, xy, alien_width, alien_height):
+    def __init__(self, xy, alien_width, alien_height, score_value):
         super().__init__()
         self.alien_width = alien_width
         self.alien_height = alien_height
@@ -14,6 +14,7 @@ class Alien(Turtle):
         self.penup()
         self.goto(xy)
         self.direction = "right"
+        self.score_value = score_value
 
 
     def move(self, direction, y_move):
@@ -38,6 +39,8 @@ class Alien(Turtle):
         self.hideturtle()
 
 
-
     def fire_bullet(self) -> Bullet:
         return Bullet(owner='alien', direction=-1, pos=(self.xcor(), self.ycor()), bullet_width=.5, bullet_height=1)
+
+    def hit_player_space(self, player) -> bool:
+        return self.ycor() <= player.ycor()
