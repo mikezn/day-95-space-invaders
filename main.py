@@ -2,6 +2,7 @@ from turtle import Screen
 import time
 from gun import Gun
 from alien import Alien
+from barrier import Barrier
 import random
 from scoreboard import Scoreboard
 
@@ -12,6 +13,13 @@ WALL_LEFT = ((SCREEN_WIDTH/2)*-1)
 WALL_RIGHT = SCREEN_WIDTH/2
 WALL_TOP = (SCREEN_HEIGHT/2)-100
 WALL_BOTTOM = ((SCREEN_HEIGHT/2)*-1)
+
+ALIEN_WIDTH = 2
+ALIEN_HEIGHT = 2
+ALIEN_SPACING = 10
+ALIEN_Y_LOC = WALL_TOP - (ALIEN_HEIGHT / 2)
+
+BARRIER_Y_LOC = WALL_BOTTOM + 100
 
 bullets = []
 
@@ -28,35 +36,34 @@ player = Gun((0, WALL_BOTTOM+15), gun_width=2, gun_height=1)
 # Set up scoreboard
 scoreboard = Scoreboard(player, WALL_LEFT, WALL_RIGHT)
 
-# Create aliens
-aliens = []
 
-# Block layout
-rows = 2
-cols = 8
-alien_width = 2
-alien_height = 2
-spacing =  10
+def batch_create(object, y_loc, object_width, object_height, rows, cols, spacing, **kwargs) -> list:
+    # this func is to create a batch of barriers or aliens in rows and columns
+    # calculate total length of batch to find their starting point so the batch is centered
+    batch_length = (cols * object_width * 20) + ((object_width - 1) * cols)
+    start_x = -batch_length / 2
+    start_y = y_loc - (object_height / 2)
+    batch = []
+    for row in range(rows):
+        for col in range(cols):
+            x = start_x + col * (object_width * 20 + spacing)
+            y = start_y - row * (object_height * 20 + spacing)
+            obj = object((x, y), object_width, object_height, **kwargs)
+            batch.append(obj)
+    return batch
 
-# calculate total length of alien horde to find their starting point so the horde is centered
-horde_length = (cols*alien_width*20) + ((alien_width-1)*cols)
-start_x = -horde_length/2
-start_y = WALL_TOP - (alien_height/2)
 
-# generate blocks
-for row in range(rows):
-    for col in range(cols):
-        x = start_x + col * (alien_width*20 + spacing)
-        y = start_y - row * (alien_height*20 + spacing)
-        alien = Alien((x, y), alien_width, alien_height, score_value=100)
-        aliens.append(alien)
+# Set up barriers and aliens
+barriers = batch_create(Barrier, y_loc=BARRIER_Y_LOC, object_width=4, object_height=1, rows=1, cols=1, spacing=60)
+aliens = batch_create(Alien, y_loc=ALIEN_Y_LOC, object_width=ALIEN_WIDTH, object_height=ALIEN_WIDTH, rows=2, cols=8, spacing=ALIEN_SPACING, score_value=100)
+    
 
 # player paddle to move on arrow key press
 screen.listen()
 screen.listen()
-screen.onkeypress(player.move_left, "Left")
+screen.onkeypress(lambda: player.move_left(WALL_LEFT), "Left")
 screen.onkeyrelease(player.stop_left, "Left")
-screen.onkeypress(player.move_right, "Right")
+screen.onkeypress(lambda: player.move_right(WALL_RIGHT), "Right")
 screen.onkeyrelease(player.stop_right, "Right")
 screen.onkey(lambda: bullets.append(player.fire_bullet()), "space")
 
@@ -79,6 +86,15 @@ def main() -> None:
         # bullet move and collision detection
         for bullet in bullets[:]:
             bullet.move()
+
+            for barrier in barriers[:]:
+                if bullet.detect_collision(barrier, 20):
+                    bullet.destroy()
+                    bullets.remove(bullet)
+                    if barrier.hit():
+                        barrier.destroy()
+                        barriers.remove(barrier)
+                        print(barrier.lives)
             if bullet.owner == 'player':
                 for alien in aliens[:]:
                     if bullet.detect_collision(alien, 20):
@@ -110,7 +126,7 @@ def main() -> None:
         if current_time - last_alien_move_time >= alien_move_interval:
             last_alien_move_time = current_time
             if horde_direction != next_dir:
-                y_move = (-alien_height*20) - spacing
+                y_move = (-ALIEN_HEIGHT*20) - ALIEN_SPACING
             horde_direction = next_dir
             for alien in aliens:
                 # Randomly let aliens shoot

@@ -19,16 +19,26 @@ class Gun(Turtle):
         self.goto(self.start_pos)
 
 
-    def move_left(self) -> None:
-        self.moving_left = True
+    def move_left(self, wall_left) -> None:
+        if (self.xcor() - self.gun_width*10) <= wall_left:
+            # extra function to snap player back to wall
+            self.setx(wall_left + self.gun_width*10)
+            self.stop_left()
+        else:
+            self.moving_left = True
 
 
     def stop_left(self) -> None:
         self.moving_left = False
 
 
-    def move_right(self) -> None:
-        self.moving_right = True
+    def move_right(self, wall_right) -> None:
+        if (self.xcor() + self.gun_width * 10) >= wall_right:
+            # extra function to snap player back to wall
+            self.setx(wall_right - self.gun_width * 10)
+            self.stop_right()
+        else:
+            self.moving_right = True
 
 
     def stop_right(self) -> None:
