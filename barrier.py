@@ -18,7 +18,6 @@ class Barrier(Turtle):
         self.lives-=1
         # change color
         # destroy when no lives
-        print("im hit")
         if self.lives == 0:
             return True
 

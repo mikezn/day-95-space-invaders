@@ -1,4 +1,5 @@
 from turtle import Turtle
+import collidepy
 
 MOVE_DIST = 3
 
@@ -27,8 +28,8 @@ class Bullet(Turtle):
         self.hideturtle()
 
 
-    def detect_collision(self, target, threshold) -> bool:
-        return self.distance(target) < threshold
+    def detect_collision(self, target) -> bool:
+        return collidepy.collides_with(self, target)
 
 
     def off_screen(self, left, right, top, bottom) -> bool:

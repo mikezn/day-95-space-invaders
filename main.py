@@ -6,7 +6,7 @@ from barrier import Barrier
 import random
 from scoreboard import Scoreboard
 
-SCREEN_WIDTH = 855
+SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 
 WALL_LEFT = ((SCREEN_WIDTH/2)*-1)
@@ -17,9 +17,12 @@ WALL_BOTTOM = ((SCREEN_HEIGHT/2)*-1)
 ALIEN_WIDTH = 2
 ALIEN_HEIGHT = 2
 ALIEN_SPACING = 10
-ALIEN_Y_LOC = WALL_TOP - (ALIEN_HEIGHT / 2)
+ALIEN_Y_LOC = WALL_TOP - (ALIEN_HEIGHT * 20)
 
-BARRIER_Y_LOC = WALL_BOTTOM + 100
+ALIEN_FIRE_RATE = 0 #0.05
+
+BARRIER_Y_LOC = WALL_BOTTOM + 110
+BARRIER_SPACING = 100
 
 bullets = []
 
@@ -40,22 +43,22 @@ scoreboard = Scoreboard(player, WALL_LEFT, WALL_RIGHT)
 def batch_create(object, y_loc, object_width, object_height, rows, cols, spacing, **kwargs) -> list:
     # this func is to create a batch of barriers or aliens in rows and columns
     # calculate total length of batch to find their starting point so the batch is centered
-    batch_length = (cols * object_width * 20) + ((object_width - 1) * cols)
+    batch_length = (cols * object_width * 20) + ((cols - 1) * spacing)
     start_x = -batch_length / 2
-    start_y = y_loc - (object_height / 2)
+    start_y = y_loc
     batch = []
     for row in range(rows):
         for col in range(cols):
-            x = start_x + col * (object_width * 20 + spacing)
-            y = start_y - row * (object_height * 20 + spacing)
+            x = start_x + (object_width*10) + (object_width*20*col + (spacing*col))
+            y = start_y - (object_height*10) + (object_height*20*row) + (spacing*row)
             obj = object((x, y), object_width, object_height, **kwargs)
             batch.append(obj)
     return batch
 
 
 # Set up barriers and aliens
-barriers = batch_create(Barrier, y_loc=BARRIER_Y_LOC, object_width=4, object_height=1, rows=1, cols=1, spacing=60)
-aliens = batch_create(Alien, y_loc=ALIEN_Y_LOC, object_width=ALIEN_WIDTH, object_height=ALIEN_WIDTH, rows=2, cols=8, spacing=ALIEN_SPACING, score_value=100)
+barriers = batch_create(Barrier, y_loc=BARRIER_Y_LOC, object_width=4, object_height=1, rows=1, cols=5, spacing=BARRIER_SPACING)
+aliens = batch_create(Alien, y_loc=ALIEN_Y_LOC, object_width=ALIEN_WIDTH, object_height=ALIEN_WIDTH, rows=1, cols=1, spacing=ALIEN_SPACING, score_value=100)
     
 
 # player paddle to move on arrow key press
@@ -88,7 +91,7 @@ def main() -> None:
             bullet.move()
 
             for barrier in barriers[:]:
-                if bullet.detect_collision(barrier, 20):
+                if bullet.detect_collision(barrier): # need better detection
                     bullet.destroy()
                     bullets.remove(bullet)
                     if barrier.hit():
@@ -97,21 +100,25 @@ def main() -> None:
                         print(barrier.lives)
             if bullet.owner == 'player':
                 for alien in aliens[:]:
-                    if bullet.detect_collision(alien, 20):
+                    if bullet.detect_collision(alien):
                         player.update_score(alien.score_value)
                         bullet.destroy()
                         bullets.remove(bullet)
                         alien.destroy()
                         aliens.remove(alien)
                         break
+                if len(aliens) == 0:
+                    scoreboard.game_over()
+                    game_is_on = False
+                    break
             elif bullet.owner == 'alien':
-                if bullet.detect_collision(player, 20):
+                if bullet.detect_collision(player):
                     bullet.destroy()
                     bullets.remove(bullet)
                     player.hideturtle()
                     life_lost_time = time.time()
                     if player.hit():
-                        print("GAME OVER – The aliens have landed!")
+                        scoreboard.game_over()
                         game_is_on = False
                         break
             if time.time() - life_lost_time >= life_reset_duration:
@@ -130,14 +137,14 @@ def main() -> None:
             horde_direction = next_dir
             for alien in aliens:
                 # Randomly let aliens shoot
-                if random.random() < 0.05:  # 1% chance per frame (tweak this)
+                if random.random() < ALIEN_FIRE_RATE:
                     bullets.append(alien.fire_bullet())
                 alien.move(horde_direction, y_move)
                 if alien.wall_collide(WALL_LEFT, WALL_RIGHT) and horde_direction == next_dir:
                     next_dir*=-1
                 #check if alien has invaded player space at bottom (game over)
                 if alien.hit_player_space(player):
-                    print("GAME OVER – The aliens have landed!")
+                    scoreboard.game_over()
                     game_is_on = False
                     break
 
