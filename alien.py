@@ -27,7 +27,6 @@ class Alien(Turtle):
         side_left = (self.xcor() - (self.alien_width*20/2))
 
         if side_right >= wall_right or side_left <= wall_left:
-            print(side_right, wall_right, side_left, wall_left)
             return True
         else:
             return False
